@@ -1,9 +1,9 @@
 # =========================== Basic Settings ===========================
 # machine info
-num_gpus_per_job: 4  # number of gpus each job need
-num_cpus_per_job: 63  # number of cpus each job need
-memory_per_job: 200  # memory requirement each job need
-gpu_type: "nvidia-tesla-p100"
+num_gpus_per_job: 1  # number of gpus each job need
+num_cpus_per_job: 4  # number of cpus each job need
+memory_per_job: 8  # memory requirement each job need
+gpu_type: "nvidia-rtx-a6000"
 
 # data
 dataset: CIFAR10
@@ -16,7 +16,15 @@ data_loader_workers: 5 #10
 num_classes: 10
 image_size: 32
 topk: [1, 5]
-num_epochs: 200 #150
+num_epochs: 1 #150
+
+#FL setup
+num_iters: 2000
+num_clients: 4
+num_workers: 4
+knowledge_distillation: True
+data_dir: data/cifar10
+device: cpu
 
 # optimizer
 optimizer: sgd
@@ -25,11 +33,11 @@ weight_decay: 0.00004
 nesterov: True
 
 # lr
-lr: 0.1 #0.05
+lr: 0.1
 lr_scheduler: multistep
 multistep_lr_milestones: [100, 150]
 multistep_lr_gamma: 0.1
-#lr_scheduler: cos_annealing_iter
+lr_scheduler: linear_decaying
 #lr_scheduler: butterworth_iter #mixed_iter #gaussian_iter #exp_decaying_iter #cos_annealing_iter
 #exp_decaying_gamma: 0.98
 
@@ -45,13 +53,13 @@ test_only: False
 
 #
 random_seed: 1995
-batch_size: 128 #1024 #256 #512 #256 #1024 #4096 #1024 #256
+batch_size: 512 #1024 #256 #512 #256 #1024 #4096 #1024 #256
 model: ''
 reset_parameters: True
 
 #
 distributed: False #True
-distributed_all_reduce: False #True
+distributed_all_reduce: True #True
 use_diff_seed: False #True
 
 #
@@ -72,7 +80,7 @@ rescale_type: constant #[stddev, constant]
 switch_alpha: True
 
 #
-weight_quant_scheme: modified
+weight_quant_scheme: centered
 act_quant_scheme: original
 
 # =========================== Override Settings ===========================
@@ -81,5 +89,7 @@ log_dir: ./results/cifar10/resnet20
 adaptive_training: True
 model: models.q_resnet_cifar
 depth: 20
-bits_list: [5,4,3]
+bits_list: [8,6,4,4]
+bits: [8,6,4]
+bits_index: [0,1,2,2]
 weight_only: False

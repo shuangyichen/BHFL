@@ -163,6 +163,7 @@ def app():
                 batch_size = int(arg[3:])
         if job_yaml_file is None:
             job_yaml_file = sys.stdin.readline()
+        # print("yaml file:",job_yaml_file)
         FLAGS = Config(job_yaml_file)
         if batch_size is not None:
             FLAGS.batch_size = batch_size

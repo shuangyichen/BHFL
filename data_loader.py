@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.utils.data as data
 from torchvision.datasets import CIFAR10
-
+from utils.config import FLAGS
 class Cutout(object):
     def __init__(self, length):
         self.length = length
@@ -134,10 +134,13 @@ def _data_transforms_cifar10():
     return train_transform, valid_transform
 
 def load_cifar10_data(datadir):
+    seed = FLAGS.random_seed
     train_transform, test_transform = _data_transforms_cifar10()
-
+    torch.random.manual_seed(seed)
     cifar10_train_ds = CIFAR10_truncated(datadir, train=True, download=True, transform=train_transform)
+    torch.random.manual_seed(seed)
     cifar10_test_ds = CIFAR10_truncated(datadir, train=False, download=True, transform=test_transform)
+  
 
     X_train, y_train = cifar10_train_ds.data, cifar10_train_ds.target
     X_test, y_test = cifar10_test_ds.data, cifar10_test_ds.target
@@ -146,12 +149,14 @@ def load_cifar10_data(datadir):
 
 def partition_data(dataset, datadir, partition, n_nets, alpha):
     logging.info("*********partition data***************")
+    seed = FLAGS.random_seed
     X_train, y_train, X_test, y_test = load_cifar10_data(datadir)
     n_train = X_train.shape[0]
     # n_test = X_test.shape[0]
 
     if partition == "homo":
         total_num = n_train
+        np.random.seed(seed)
         idxs = np.random.permutation(total_num)
         batch_idxs = np.array_split(idxs, n_nets)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_nets)}
@@ -168,7 +173,9 @@ def partition_data(dataset, datadir, partition, n_nets, alpha):
             # for each class in the dataset
             for k in range(K):
                 idx_k = np.where(y_train == k)[0]
+                np.random.seed(seed)
                 np.random.shuffle(idx_k)
+                np.random.seed(seed)
                 proportions = np.random.dirichlet(np.repeat(alpha, n_nets))
                 ## Balance
                 proportions = np.array([p * (len(idx_j) < N / n_nets) for p, idx_j in zip(proportions, idx_batch)])
@@ -178,6 +185,7 @@ def partition_data(dataset, datadir, partition, n_nets, alpha):
                 min_size = min([len(idx_j) for idx_j in idx_batch])
 
         for j in range(n_nets):
+            np.random.seed(seed)
             np.random.shuffle(idx_batch[j])
             net_dataidx_map[j] = idx_batch[j]
 
